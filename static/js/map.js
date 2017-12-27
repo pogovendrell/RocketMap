@@ -528,7 +528,8 @@ function pokemonLabel(item) {
       ${name} <span class='pokemon name pokedex'><a href='http://pokemon.gameinfo.io/en/pokemon/${id}' target='_blank' title='View in Pokédex'>#${id}</a></span> ${formString} <span class='pokemon gender rarity'>${genderType[gender - 1]} ${rarityDisplay}</span> ${typesDisplay}
     </div>`
 
-    if (cp !== null && cpMultiplier !== null) {
+	// TODO
+    if (false && cp !== null && cpMultiplier !== null) {
         var pokemonLevel = getPokemonLevel(cpMultiplier)
 
         if (atk !== null && def !== null && sta !== null) {
@@ -964,6 +965,7 @@ function getTimeUntil(time) {
 
 function getNotifyText(item) {
     var iv = getIv(item['individual_attack'], item['individual_defense'], item['individual_stamina'])
+    iv = null //TODO
     var find = ['<prc>', '<pkm>', '<atk>', '<def>', '<sta>']
     var replace = [((iv) ? iv.toFixed(1) : ''), item['pokemon_name'], item['individual_attack'],
         item['individual_defense'], item['individual_stamina']]
@@ -1015,7 +1017,8 @@ function isNotifyPoke(poke) {
     const isOnNotifyList = notifiedPokemon.indexOf(poke['pokemon_id']) > -1 || notifiedRarity.indexOf(poke['pokemon_rarity']) > -1
     var hasHighIV = false
 
-    if (poke['individual_attack'] != null) {
+//TODO
+    if (false && poke['individual_attack'] != null) {
         const perfection = getIv(poke['individual_attack'], poke['individual_defense'], poke['individual_stamina'])
         hasHighIV = notifiedMinPerfection > 0 && perfection >= notifiedMinPerfection
     }

@@ -189,7 +189,6 @@ class Pokemon(LatLongModel):
 
         pokemon = []
         for p in list(query):
-
             p['pokemon_name'] = get_pokemon_name(p['pokemon_id'])
             p['pokemon_rarity'] = get_pokemon_rarity(p['pokemon_id'])
             p['pokemon_types'] = get_pokemon_types(p['pokemon_id'])
@@ -198,8 +197,10 @@ class Pokemon(LatLongModel):
                     transform_from_wgs_to_gcj(p['latitude'], p['longitude'])
             pokemon.append(p)
 
+
         # Re-enable the GC.
         gc.enable()
+
 
         return pokemon
 
@@ -235,6 +236,7 @@ class Pokemon(LatLongModel):
                 p['latitude'], p['longitude'] = \
                     transform_from_wgs_to_gcj(p['latitude'], p['longitude'])
             pokemon.append(p)
+
 
         # Re-enable the GC.
         gc.enable()
