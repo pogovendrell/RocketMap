@@ -66,7 +66,11 @@ class Pogom(Flask):
         self.route("/robots.txt", methods=['GET'])(self.render_robots_txt)
         self.route("/serviceWorker.min.js", methods=['GET'])(
             self.render_service_worker_js)
-        self.route("/index.html", methods=['GET'])(self.get_index)
+        #self.route("/index.html", methods=['GET'])(self.get_index)
+        self.route("/login", methods=['GET'])(self.get_login)
+
+    def get_login(self):
+        return render_template('login.html')
 
     def get_index(self):
         return render_template('index.html')
