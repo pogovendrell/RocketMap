@@ -24,6 +24,7 @@ from base64 import b64encode
 from cachetools import TTLCache
 from cachetools import cached
 from timeit import default_timer
+from random import randint
 
 from .utils import (get_pokemon_name, get_pokemon_rarity, get_pokemon_types,
                     get_args, cellid, in_radius, date_secs, clock_between,
@@ -1865,6 +1866,7 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
     sightings = {}
     new_spawn_points = []
     sp_id_list = []
+    encounter_retry_count = 1
 
     # Consolidate the individual lists in each cell into two lists of Pokemon
     # and a list of forts.
@@ -2026,6 +2028,17 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
             if args.encounter and (pokemon_id in args.enc_whitelist):
                 pokemon_info = encounter_pokemon(
                     args, p, account, api, account_sets, status, key_scheduler)
+                # Retry the encounter if no accounts available
+                while not pokemon_info:
+                    if encounter_retry_count >= 10:
+                        log.error('No L30 accounts are available, please' +
+                            ' consider adding more. Skipping encounter after 10 retries.')
+                        break
+                    log.debug('Retry: %s for encountering a Pokemon.', encounter_retry_count)
+                    pokemon_info = encounter_pokemon(
+                        args, p, account, api, account_sets, status, key_scheduler)
+                    encounter_retry_count += 1
+                    time.sleep(randint(10,50)*0.1)
 
             pokemon[p.encounter_id] = {
                 'encounter_id': b64encode(str(p.encounter_id)),
@@ -2378,8 +2391,6 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
 
         # If we didn't get an account, we can't encounter.
         if not hlvl_account:
-            log.error('No L30 accounts are available, please' +
-                      ' consider adding more. Skipping encounter.')
             return False
 
         # Logging.
