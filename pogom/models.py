@@ -1866,7 +1866,7 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
     sightings = {}
     new_spawn_points = []
     sp_id_list = []
-    encounter_retry_count = 1
+    encounter_retry_count = 0
 
     # Consolidate the individual lists in each cell into two lists of Pokemon
     # and a list of forts.
@@ -2032,13 +2032,16 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                 while not pokemon_info:
                     if encounter_retry_count >= 10:
                         log.error('No L30 accounts are available, please' +
-                            ' consider adding more. Skipping encounter after 10 retries.')
+                                  ' consider adding more. Skipping encounter' +
+                                  ' after 10 retries.')
                         break
-                    log.debug('Retry: %s for encountering a Pokemon.', encounter_retry_count)
+                    log.debug('Retry: %s for encountering a Pokemon.',
+                              encounter_retry_count)
                     pokemon_info = encounter_pokemon(
-                        args, p, account, api, account_sets, status, key_scheduler)
+                        args, p, account, api, account_sets, status,
+                        key_scheduler)
                     encounter_retry_count += 1
-                    time.sleep(randint(10,50)*0.1)
+                    time.sleep(randint(10, 50)*0.1)
 
             pokemon[p.encounter_id] = {
                 'encounter_id': b64encode(str(p.encounter_id)),
