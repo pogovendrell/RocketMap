@@ -109,6 +109,13 @@ class LatLongModel(BaseModel):
                         result['latitude'], result['longitude'])
         return results
 
+class User(BaseModel):
+    user_id = SmallIntegerField(primary_key=True)
+    username = CharField(unique=True)
+    password = CharField(null=False)
+    phone_number = CharField(null=True)
+    expiry_date = DateTimeField(index=True)
+
 
 class Pokemon(LatLongModel):
     # We are base64 encoding the ids delivered by the api

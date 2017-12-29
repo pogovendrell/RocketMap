@@ -5,7 +5,7 @@ import calendar
 import logging
 
 from flask import Flask, abort, jsonify, render_template, request,\
-    make_response, send_from_directory
+    make_response, send_from_directory, session
 from flask.json import JSONEncoder
 from flask_compress import Compress
 from datetime import datetime
@@ -15,19 +15,20 @@ from bisect import bisect_left
 
 from .models import (Pokemon, Gym, Pokestop, ScannedLocation,
                      MainWorker, WorkerStatus, Token, HashKeys,
-                     SpawnPoint)
+                     SpawnPoint, User)
 from .utils import now, dottedQuadToNum
 from .blacklist import fingerprints, get_ip_blacklist
 
 log = logging.getLogger(__name__)
 compress = Compress()
 
-
 class Pogom(Flask):
 
     def __init__(self, import_name, **kwargs):
         super(Pogom, self).__init__(import_name, **kwargs)
         compress.init_app(self)
+        self.secret_key = 'fsdfvdfdcx'
+        self.config['SESSION_TYPE'] = 'filesystem'
 
         args = get_args()
 
@@ -47,6 +48,7 @@ class Pogom(Flask):
 
         # Routes
         self.json_encoder = CustomJSONEncoder
+        self.route("/", methods=['POST'])(self.getLoggedMap)
         self.route("/", methods=['GET'])(self.fullmap)
         self.route("/raw_data", methods=['GET'])(self.raw_data)
         self.route("/loc", methods=['GET'])(self.loc)
@@ -170,6 +172,17 @@ class Pogom(Flask):
         else:
             return jsonify({'message': 'invalid use of api'})
         return self.get_search_control()
+
+    def getLoggedMap(self):
+        args = get_args()
+        username = request.form.get('username').lower();
+        password = request.form.get('password');
+        
+        query = User.select(User).where(User.username == username and User.password == password).dicts()
+        if(len(query)):
+            session['logged'] = True;
+            return self.fullmap()
+        return "Error! Credenciales incorrectas..."
 
     def fullmap(self):
         self.heartbeat[0] = now()
@@ -324,6 +337,15 @@ class Pogom(Flask):
                     Pokemon.get_active_by_id(reids, swLat, swLng,
                                              neLat, neLng))
                 d['reids'] = reids
+            
+            # If not logged, we hide IV
+            if(session.get('logged') != True):
+                for p in d['pokemons']:
+                    p['individual_attack'] = None;
+                    p['individual_defense'] = None;
+                    p['individual_stamina'] = None;
+                    p['cp'] = None;
+            d['logged'] = session.get('logged')
 
         if (request.args.get('pokestops', 'true') == 'true' and
                 not args.no_pokestops):
