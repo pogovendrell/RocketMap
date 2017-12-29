@@ -110,6 +110,13 @@ class LatLongModel(BaseModel):
                         result['latitude'], result['longitude'])
         return results
 
+class User(BaseModel):
+    user_id = SmallIntegerField(primary_key=True)
+    username = CharField(unique=True)
+    password = CharField(null=False)
+    phone_number = CharField(null=True)
+    expiry_date = DateTimeField(index=True)
+
 
 class Pokemon(LatLongModel):
     # We are base64 encoding the ids delivered by the api
@@ -190,7 +197,6 @@ class Pokemon(LatLongModel):
 
         pokemon = []
         for p in list(query):
-
             p['pokemon_name'] = get_pokemon_name(p['pokemon_id'])
             p['pokemon_rarity'] = get_pokemon_rarity(p['pokemon_id'])
             p['pokemon_types'] = get_pokemon_types(p['pokemon_id'])
@@ -199,8 +205,10 @@ class Pokemon(LatLongModel):
                     transform_from_wgs_to_gcj(p['latitude'], p['longitude'])
             pokemon.append(p)
 
+
         # Re-enable the GC.
         gc.enable()
+
 
         return pokemon
 
@@ -236,6 +244,7 @@ class Pokemon(LatLongModel):
                 p['latitude'], p['longitude'] = \
                     transform_from_wgs_to_gcj(p['latitude'], p['longitude'])
             pokemon.append(p)
+
 
         # Re-enable the GC.
         gc.enable()
