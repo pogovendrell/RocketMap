@@ -116,6 +116,7 @@ class User(BaseModel):
     password = CharField(null=False)
     phone_number = CharField(null=True)
     expiry_date = DateTimeField(index=True)
+    user_type = SmallIntegerField(null=True)
 
 
 class Pokemon(LatLongModel):
