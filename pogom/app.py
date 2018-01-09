@@ -70,6 +70,13 @@ class Pogom(Flask):
             self.render_service_worker_js)
         #self.route("/index.html", methods=['GET'])(self.get_index)
         self.route("/login", methods=['GET'])(self.get_login)
+        self.route("/register", methods=['GET'])(self.get_register)
+
+    def get_register(self):
+        if(session.get('logged') == True && session.get('is_admin') == True):
+            return render_template('register.html')
+        else:
+            return "ERROR! PERMISSIONS REQUIRED."
 
     def get_login(self):
         return render_template('login.html')
@@ -180,6 +187,7 @@ class Pogom(Flask):
         
         query = User.select(User).where(User.username == username and User.password == password).dicts()
         if(len(query)):
+            session['is_admin'] = len(query.filter_by(user_type='1')) > 0;
             session['logged'] = True;
             return self.fullmap()
         return "Error! Credenciales incorrectas..."
