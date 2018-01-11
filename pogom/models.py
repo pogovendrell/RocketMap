@@ -115,8 +115,10 @@ class User(BaseModel):
     username = CharField(unique=True)
     password = CharField(null=False)
     phone_number = CharField(null=True)
-    expiry_date = DateTimeField(index=True)
-    user_type = SmallIntegerField(null=True)
+    expiry_date = DateTimeField(default=datetime.utcnow)
+    user_type = SmallIntegerField(null=False, default=0)
+    donated = IntegerField(null=False, default=0)
+    last_donation_date = DateTimeField(default=datetime.utcnow)
 
 
 class Pokemon(LatLongModel):
@@ -2040,10 +2042,10 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                     args, p, account, api, account_sets, status, key_scheduler)
                 # Retry the encounter if no accounts available
                 while not pokemon_info:
-                    if encounter_retry_count >= 10:
+                    if encounter_retry_count >= 15:
                         log.error('No L30 accounts are available, please' +
                                   ' consider adding more. Skipping encounter' +
-                                  ' after 10 retries.')
+                                  ' after 15 retries.')
                         break
                     log.debug('Retry: %s for encountering a Pokemon.',
                               encounter_retry_count)

@@ -4,6 +4,8 @@
 import calendar
 import logging
 
+from dateutil.relativedelta import relativedelta
+
 from flask import Flask, abort, jsonify, render_template, request,\
     make_response, send_from_directory, session
 from flask.json import JSONEncoder
@@ -71,6 +73,47 @@ class Pogom(Flask):
         #self.route("/index.html", methods=['GET'])(self.get_index)
         self.route("/login", methods=['GET'])(self.get_login)
         self.route("/register", methods=['GET'])(self.get_register)
+        self.route("/register", methods=['POST'])(self.register)
+
+    def register(self):
+        username = request.form.get('username');
+        password = request.form.get('password');
+        phone = request.form.get('phonenumber');
+        donation = int(request.form.get('donation'));
+        d_months = None;
+        if(request.form.get('months')):
+            d_months = int(request.form.get('months'));
+        expiration = request.form.get('expiration');
+        expirationdate = None;
+        if(expiration):
+            expirationdate = datetime.strptime(expiration, '%Y-%m-%d');
+        
+        if(not d_months and not expirationdate):
+            return "You need to specify months or expiration date."
+        elif(not donation):
+            return "You need to specify the donation value."
+        elif(not username):
+            return "You need to specify the username."
+      
+        user = None;
+        try:
+            user = User.get(User.username == username.lower());
+            if(password or phone):
+                return "USERNAME ALREADY IN USE"
+        except Exception as e:
+            user = User(username=username, password=password, phone_number=phone);
+            
+        user.donated = user.donated + donation;
+        user.last_donation_date = datetime.today();
+        if(not expirationdate):
+            expirationdate = user.expiry_date;
+            if(user.expiry_date < datetime.today()):
+                expirationdate = datetime.today();
+            expirationdate = expirationdate + relativedelta(months=d_months);
+        user.expiry_date = expirationdate
+
+        user.save()
+        return "OK, new expiration date of " + user.username + " is: " + user.expiry_date.strftime("%d-%m-%Y")
 
     def get_register(self):
         if(session.get('logged') == True and session.get('is_admin') == True):
@@ -187,6 +230,7 @@ class Pogom(Flask):
         
         user = User.select(User).where(User.username == username and User.password == password).first()
         if(user != None):
+            session.permanent = True
             session['is_admin'] = user.user_type == 1;
             session['logged'] = True;
             return self.fullmap()
