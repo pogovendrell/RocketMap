@@ -264,13 +264,15 @@ class Pogom(Flask):
 
         map_lat = self.current_location[0]
         map_lng = self.current_location[1]
-
+        
+        isLogged = session.get('logged') == True
         return render_template('map.html',
                                lat=map_lat,
                                lng=map_lng,
                                gmaps_key=args.gmaps_key,
                                lang=args.locale,
-                               show=visibility_flags
+                               show=visibility_flags,
+                               logged=isLogged
                                )
 
     def raw_data(self):

@@ -407,6 +407,12 @@ function updateSearchStatus() {
 }
 
 function initSidebar() {
+    if(isLogged){
+	    $('#user-expiry-date').text('IV Activated')
+    }
+    else {
+	    $('#user-expiry-date').text('')
+    }
     $('#gyms-switch').prop('checked', Store.get('showGyms'))
     $('#gym-sidebar-switch').prop('checked', Store.get('useGymSidebar'))
     $('#gym-sidebar-wrapper').toggle(Store.get('showGyms') || Store.get('showRaids'))
