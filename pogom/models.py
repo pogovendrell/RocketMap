@@ -2042,10 +2042,10 @@ def parse_map(args, map_dict, scan_coords, scan_location, db_update_queue,
                     args, p, account, api, account_sets, status, key_scheduler)
                 # Retry the encounter if no accounts available
                 while not pokemon_info:
-                    if encounter_retry_count >= 15:
+                    if encounter_retry_count >= 25:
                         log.error('No L30 accounts are available, please' +
                                   ' consider adding more. Skipping encounter' +
-                                  ' after 15 retries.')
+                                  ' after 25 retries.')
                         break
                     log.debug('Retry: %s for encountering a Pokemon.',
                               encounter_retry_count)
