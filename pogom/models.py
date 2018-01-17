@@ -2453,13 +2453,13 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
         # Log in.
         check_login(args, hlvl_account, hlvl_api, status['proxy_url'])
         encounter_level = hlvl_account['level']
-
+        
         # User error -> we skip freeing the account.
         if encounter_level < 30:
             log.warning('Expected account of level 30 or higher, ' +
                         'but account %s is only level %d',
                         hlvl_account['username'], encounter_level)
-            return False
+            return True # Para que vuelva a intentar el login (suponemos que todas las cuentas son lvl30)
 
         # Encounter Pokémon.
         encounter_result = encounter(
