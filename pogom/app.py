@@ -72,10 +72,12 @@ class Pogom(Flask):
             self.render_service_worker_js)
         #self.route("/index.html", methods=['GET'])(self.get_index)
         self.route("/login", methods=['GET'])(self.get_login)
-        self.route("/register", methods=['GET'])(self.get_register)
-        self.route("/register", methods=['POST'])(self.register)
+        self.route("/register_admin", methods=['GET'])(self.get_register_admin)
+        self.route("/register_admin", methods=['POST'])(self.register_admin)
+        self.route("/register", methods=['GET'])(self.get_register_user)
+        self.route("/register", methods=['POST'])(self.register_user)
 
-    def register(self):
+    def register_admin(self):
         username = request.form.get('username');
         password = request.form.get('password');
         phone = request.form.get('phonenumber');
@@ -115,11 +117,31 @@ class Pogom(Flask):
         user.save()
         return "OK, new expiration date of " + user.username + " is: " + user.expiry_date.strftime("%d-%m-%Y")
 
-    def get_register(self):
+    def register_user(self):
+        username = request.form.get('username');
+        password = request.form.get('password');
+        phone = request.form.get('phonenumber');
+
+        if(not username or not password or not phone):
+            return "ERROR: Debes rellenar todos los campos."
+
+        try:
+            user = User.get(User.username == username.lower());
+            return "USERNAME ALREADY IN USE"
+        except Exception as e:
+            user = User(username=username, password=password, phone_number=phone);
+
+        user.save()
+        return "OK! Gracias por registrarte, te avisaremos cuando tu cuenta esté activa."
+
+    def get_register_admin(self):
         if(session.get('logged') == True and session.get('is_admin') == True):
-            return render_template('register.html')
+            return render_template('register_admin.html')
         else:
             return "ERROR! PERMISSIONS REQUIRED."
+
+    def get_register_user(self):
+        return render_template('register_user.html')
 
     def get_login(self):
         return render_template('login.html')
@@ -228,13 +250,15 @@ class Pogom(Flask):
         username = request.form.get('username').lower();
         password = request.form.get('password');
         
-        user = User.select(User).where(User.username == username and User.password == password).first()
-        if(user != None):
+        user = User.select(User).where(User.username == username).first()
+        if(user != None and user.password == password and user.expiry_date > datetime.utcnow()):
             session.permanent = True
             session['is_admin'] = user.user_type == 1;
             session['logged'] = True;
             return self.fullmap()
-        return "Error! Credenciales incorrectas..."
+        elif(user == None or user.password != password):
+            return "Error! Credenciales incorrectas..."
+        return "Error! Usuario no activado o expirado."
 
     def fullmap(self):
         self.heartbeat[0] = now()

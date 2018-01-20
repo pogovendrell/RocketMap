@@ -118,7 +118,7 @@ class User(BaseModel):
     expiry_date = DateTimeField(default=datetime.utcnow)
     user_type = SmallIntegerField(null=False, default=0)
     donated = IntegerField(null=False, default=0)
-    last_donation_date = DateTimeField(default=datetime.utcnow)
+    last_donation_date = DateTimeField(default=datetime(1,1,1))
 
 
 class Pokemon(LatLongModel):
