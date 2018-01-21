@@ -50,7 +50,7 @@ class Pogom(Flask):
 
         # Routes
         self.json_encoder = CustomJSONEncoder
-        self.route("/", methods=['POST'])(self.getLoggedMap)
+        self.route("/", methods=['POST'])(self.loginAndGetMap)
         self.route("/", methods=['GET'])(self.fullmap)
         self.route("/raw_data", methods=['GET'])(self.raw_data)
         self.route("/loc", methods=['GET'])(self.loc)
@@ -81,7 +81,9 @@ class Pogom(Flask):
         username = request.form.get('username');
         password = request.form.get('password');
         phone = request.form.get('phonenumber');
-        donation = int(request.form.get('donation'));
+        donation = 0
+        if(request.form.get('donation') != ""):
+            donation = int(request.form.get('donation'));
         d_months = None;
         if(request.form.get('months')):
             d_months = int(request.form.get('months'));
@@ -244,21 +246,40 @@ class Pogom(Flask):
         else:
             return jsonify({'message': 'invalid use of api'})
         return self.get_search_control()
+    
+    def logout(self):
+        session['logged'] = False
+        session['username'] = None
+        session['expiry_date'] = datetime.utcnow()
 
-    def getLoggedMap(self):
+    def checkUserSession(self):
+        if not session.get('logged'):# or not session.get('username'):
+            self.logout()
+            return;
+        elif not session.get('username'):
+            session['username'] = 'admin'
+
+        username = session['username']
+        user = User.select(User).where(User.username == username).first()
+        if user:
+            session['is_admin'] = user.user_type == 1;
+            session['expiry_date'] = user.expiry_date;
+        else:
+            self.logout()
+
+    def loginAndGetMap(self):
         args = get_args()
-        username = request.form.get('username').lower();
+        username = request.form.get('username');
         password = request.form.get('password');
         
-        user = User.select(User).where(User.username == username).first()
-        if(user != None and user.password == password and user.expiry_date > datetime.utcnow()):
+        user = User.select(User).where(User.username == username.lower()).first()
+        if(user != None and user.password == password):
             session.permanent = True
             session['is_admin'] = user.user_type == 1;
             session['logged'] = True;
+            session['username'] = username;
             return self.fullmap()
-        elif(user == None or user.password != password):
-            return "Error! Credenciales incorrectas..."
-        return "Error! Usuario no activado o expirado."
+        return "Error! Credenciales incorrectas..."
 
     def fullmap(self):
         self.heartbeat[0] = now()
@@ -289,14 +310,17 @@ class Pogom(Flask):
         map_lat = self.current_location[0]
         map_lng = self.current_location[1]
         
-        isLogged = session.get('logged') == True
+        self.checkUserSession()
+
         return render_template('map.html',
                                lat=map_lat,
                                lng=map_lng,
                                gmaps_key=args.gmaps_key,
                                lang=args.locale,
                                show=visibility_flags,
-                               logged=isLogged
+                               logged=session['logged'],
+                               expiry_date=session['expiry_date'].strftime('%m/%d/%Y'),
+                               username=session['username']
                                )
 
     def raw_data(self):
@@ -417,13 +441,17 @@ class Pogom(Flask):
                 d['reids'] = reids
             
             # If not logged, we hide IV
-            if(session.get('logged') != True):
+            expired_payment = True;
+            if(session.get('expiry_date')):
+                expired_payment = session['expiry_date'] < datetime.utcnow()
+            
+            if(session.get('logged') != True or expired_payment):
                 for p in d['pokemons']:
                     p['individual_attack'] = None;
                     p['individual_defense'] = None;
                     p['individual_stamina'] = None;
                     p['cp'] = None;
-            d['logged'] = session.get('logged')
+            d['logged'] = session.get('logged') and not expired_payment
 
         if (request.args.get('pokestops', 'true') == 'true' and
                 not args.no_pokestops):
