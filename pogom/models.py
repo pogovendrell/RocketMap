@@ -186,26 +186,9 @@ class Pokemon(LatLongModel):
                               (Pokemon.latitude <= neLat) &
                               (Pokemon.longitude <= neLng))))
                      .dicts())
-        # Performance:  disable the garbage collector prior to creating a
-        # (potentially) large dict with append().
-        gc.disable()
-
-        pokemon = []
-        for p in list(query):
-            p['pokemon_name'] = get_pokemon_name(p['pokemon_id'])
-            p['pokemon_rarity'] = get_pokemon_rarity(p['pokemon_id'])
-            p['pokemon_types'] = get_pokemon_types(p['pokemon_id'])
-            if args.china:
-                p['latitude'], p['longitude'] = \
-                    transform_from_wgs_to_gcj(p['latitude'], p['longitude'])
-            pokemon.append(p)
 
 
-        # Re-enable the GC.
-        gc.enable()
-
-
-        return pokemon
+        return list(query)
 
     @staticmethod
     def get_active_by_id(ids, swLat, swLng, neLat, neLng):
