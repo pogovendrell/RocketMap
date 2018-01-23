@@ -2383,12 +2383,12 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
         hlvl_api.set_position(*scan_location)
 
         # Log in.
-        int login_response = check_login(args, hlvl_account, hlvl_api, status['proxy_url'])
+        check_login(args, hlvl_account, hlvl_api, status['proxy_url'])
         encounter_level = hlvl_account['level']
         
         # User error -> we skip freeing the account.
         if encounter_level == 0:
-            log.warning('Exception while logging in with the hlvl account, trying again... [check_login=%d]', login_response);
+            log.warning('Exception while logging in with the hlvl account, trying again...');
             return True # Para que vuelva a intentar el login (suponemos que todas las cuentas son lvl30)
         elif encounter_level < 30:
        	    log.warning('Expected account of level 30 or higher, ' +
