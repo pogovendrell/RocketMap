@@ -37,4 +37,5 @@ static/rarity.json
 !static/data/*
 !static/icons/hsl*.png
 !static/app/settings.json
+static/logo.png
 accounts/

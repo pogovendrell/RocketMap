@@ -339,7 +339,8 @@ class Pogom(Flask):
                                show=visibility_flags,
                                logged=session['logged'],
                                expiry_date=session['expiry_date'].strftime('%m/%d/%Y'),
-                               username=session['username']
+                               username=session['username'],
+                               map_name=args.map_name
                                )
 
     def raw_data(self):
