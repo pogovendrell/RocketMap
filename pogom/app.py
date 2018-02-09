@@ -5,6 +5,7 @@ import calendar
 import logging
 import gc
 
+from flask_table import Table, Col
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from s2sphere import LatLng
@@ -97,12 +98,16 @@ class Pogom(Flask):
         self.route("/register_admin", methods=['POST'])(self.register_admin)
         self.route("/register", methods=['GET'])(self.get_register_user)
         self.route("/register", methods=['POST'])(self.register_user)
+	self.route("/admin_users", methods=['GET'])(self.get_admin_users)
+	self.route("/admin", methods=['GET'])(self.get_admin_menu)
 
     def register_admin(self):
         username = request.form.get('username');
         password = request.form.get('password');
         phone = request.form.get('phonenumber');
-        donation = 0
+        activeiv = request.form.get('activeiv');
+
+	donation = 0
         if(request.form.get('donation') != ""):
             donation = int(request.form.get('donation'));
         d_months = None;
@@ -123,8 +128,12 @@ class Pogom(Flask):
         user = None;
         try:
             user = User.get(User.username == username.lower());
-            if(password or phone):
-                return "USERNAME ALREADY IN USE"
+            if(password):
+		user.password = password
+	    if(phone):
+		user.phone_number = phone
+	    #if(password or phone):
+                #return "USERNAME ALREADY IN USE"
         except Exception as e:
             user = User(username=username, password=password, phone_number=phone);
             
@@ -136,7 +145,12 @@ class Pogom(Flask):
                 expirationdate = datetime.today();
             expirationdate = expirationdate + relativedelta(months=d_months);
         user.expiry_date = expirationdate
-
+	
+	if(user.user_type != 2 and activeiv):
+		user.user_type = 1
+	elif(user.user_type != 2):
+		user.user_type = 0
+	
         user.save()
         return "OK, new expiration date of " + user.username + " is: " + user.expiry_date.strftime("%d-%m-%Y")
 
@@ -165,6 +179,27 @@ class Pogom(Flask):
 
     def get_register_user(self):
         return render_template('register_user.html')
+
+    def get_admin_menu(self):
+	return render_template('admin_menu.html')
+
+    class UsersTable(Table):
+	username = Col('Username')
+	password = Col('Password')
+	phone_number = Col('Phone')
+	user_type = Col('Type')
+	expiry_date = Col('Expiry date')
+	donated = Col('Donated')
+	last_donation_date = Col('Last donation date')
+
+    def get_admin_users(self):
+	if(not session.get('logged') or not session.get('is_admin')):
+	    return "ERROR! PERMISSIONS REQUIRED."
+	users = User.select().order_by(User.expiry_date)
+	
+	table = Pogom.UsersTable(users, no_items="No hay ningún usuario registrado", border=True)
+	return render_template('admin_users.html', table = table)
+	
 
     def get_login(self):
         return render_template('login.html')
