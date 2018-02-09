@@ -516,10 +516,14 @@ def get_args():
                               ' should be updated. Decimals allowed.' +
                               ' Default: 0. 0 to disable.'),
                         type=float, default=0)
-    rarity.add_argument('-MN', '--map-name',
+    parser.add_argument('-MN', '--map-name',
                         help=('Name that will display on top of the map.' +
                             ' Default: POKEMAP.'),
                         default="POKEMAP")
+    parser.add_argument('-MP', '--map-permissions',
+			help=('Permissions: 0 for open map, 1 for iv closed,'+
+			    ' 2 for full closed. Default: 0.'),
+			type=int, default=0)
     parser.set_defaults(DEBUG=False)
 
     args = parser.parse_args()

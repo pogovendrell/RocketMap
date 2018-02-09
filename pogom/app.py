@@ -267,23 +267,30 @@ class Pogom(Flask):
         else:
             return jsonify({'message': 'invalid use of api'})
         return self.get_search_control()
-    
+   
+    def payment_expired(self):
+	args = get_args()
+	expired_payment = True;
+        if(args.map_permissions != 0 and session.get('expiry_date')):
+       		expired_payment = session['expiry_date'] < datetime.utcnow()
+	return expired_payment;
+ 
     def logout(self):
         session['logged'] = False
         session['username'] = None
         session['expiry_date'] = datetime.utcnow()
+	session['can_see_iv'] = False
 
     def checkUserSession(self):
         if not session.get('logged'):# or not session.get('username'):
             self.logout()
             return;
-        elif not session.get('username'):
-            session['username'] = 'admin'
 
         username = session['username']
         user = User.select(User).where(User.username == username).first()
         if user:
-            session['is_admin'] = user.user_type == 1;
+            session['is_admin'] = user.user_type == 2;
+            session['can_see_iv'] = user.user_type == 1 or user.user_type == 2;
             session['expiry_date'] = user.expiry_date;
         else:
             self.logout()
@@ -296,10 +303,14 @@ class Pogom(Flask):
         user = User.select(User).where(User.username == username.lower()).first()
         if(user != None and user.password == password):
             session.permanent = True
-            session['is_admin'] = user.user_type == 1;
+            session['is_admin'] = user.user_type == 2;
+	    session['can_see_iv'] = user.user_type ==1 or user.user_type == 2;
             session['logged'] = True;
             session['username'] = username;
-            return self.fullmap()
+	    session['expiry_date'] = user.expiry_date;
+            if(args.map_permissions != 0 and self.payment_expired()):
+		return "Error! Cuenta caducada..."
+	    return self.fullmap()
         return "Error! Credenciales incorrectas..."
 
     def fullmap(self):
@@ -331,6 +342,9 @@ class Pogom(Flask):
         
         self.checkUserSession()
 
+	if(args.map_permissions == 2 and (not session.get('logged') or self.payment_expired())):
+            return self.get_login();	
+
         return render_template('map.html',
                                lat=map_lat,
                                lng=map_lng,
@@ -338,6 +352,7 @@ class Pogom(Flask):
                                lang=args.locale,
                                show=visibility_flags,
                                logged=session['logged'],
+			       iv_activated=session['can_see_iv'],
                                expiry_date=session['expiry_date'].strftime('%m/%d/%Y'),
                                username=session['username'],
                                map_name=args.map_name
@@ -470,18 +485,17 @@ class Pogom(Flask):
                                                  neLng)))
                 d['reids'] = reids
             
-            # If not logged, we hide IV
-            expired_payment = True;
-            if(session.get('expiry_date')):
-                expired_payment = session['expiry_date'] < datetime.utcnow()
+            # If IV closed and not logged or expired payment, we hide IV
+            expired_payment = self.payment_expired()
             
-            if(session.get('logged') != True or expired_payment):
+            show_iv = args.map_permissions == 0 or (session.get('logged') and not expired_payment and session.get('can_see_iv'))
+
+	    if(not show_iv):
                 for p in d['pokemons']:
                     p['individual_attack'] = None;
                     p['individual_defense'] = None;
                     p['individual_stamina'] = None;
                     p['cp'] = None;
-            d['logged'] = session.get('logged') and not expired_payment
 
         if (request.args.get('pokestops', 'true') == 'true' and
                 not args.no_pokestops):
