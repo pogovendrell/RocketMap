@@ -712,7 +712,8 @@ class Pogom(Flask):
                                lat=self.current_location[0],
                                lng=self.current_location[1],
                                gmaps_key=args.gmaps_key,
-                               show=visibility_flags
+                               show=visibility_flags,
+                               map_name=args.map_name
                                )
 
     def get_gymdata(self):
@@ -731,7 +732,8 @@ class Pogom(Flask):
             abort(404)
 
         return render_template('status.html',
-                               show=visibility_flags)
+                               show=visibility_flags,
+                               map_name=args.map_name)
 
     def post_status(self):
         args = get_args()
