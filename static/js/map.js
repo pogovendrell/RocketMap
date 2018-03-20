@@ -2367,7 +2367,6 @@ function getSidebarGymMember(pokemon) {
                             </div>
                         </td>
                         <td width="190" align="center">
-                            <div class="gym pokemon">${pokemon.trainer_name} (${pokemon.trainer_level})</div>
                             <div class="gym pokemon">Deployed ${relativeTime}</div>
                             ${absoluteTime}
                         </td>
